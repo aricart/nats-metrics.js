@@ -12,6 +12,7 @@ var dataDir = ".";
 if(process.argv.length === 3) {
     dataDir = process.argv[2];
 }
+var notFound = 0;
 
 var dataFiles = ["pub.csv", "pubsub.csv", "reconnect.csv", "rr.csv", "sub.csv"];
 dataFiles.forEach(function(v) {
@@ -20,6 +21,10 @@ dataFiles.forEach(function(v) {
 
 // parse the cvs files
 function parse(file) {
+    if(! fs.existsSync(file)) {
+        notFound++;
+        return;
+    }
     console.log(file);
     fs.readFile(file, function(err, data) {
         if(err) {
@@ -66,7 +71,7 @@ function parse(file) {
 
 function loaded() {
     processed++;
-    if(processed === dataFiles.length) {
+    if(processed + notFound === dataFiles.length) {
         // we parsed all the sample, generate a summary
         Object.keys(tables).forEach(function(metric) {
             var versions = Object.keys(tables[metric].versions);
