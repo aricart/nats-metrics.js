@@ -1,6 +1,6 @@
 {
   "name": "nats-metrics",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Metrics tooling  for node-nats and derivatives",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "mkdir -p ./bin && echo '#!/usr/bin/env node\n' > ./bin/nats-metrics && cat ./index.js >> ./bin/nats-metrics"
   },
   "bin": {
-    "nats-metrics": ".bin/nats-metrics"
+    "nats-metrics": "bin/nats-metrics"
   },
   "repository": {
     "type": "git",
