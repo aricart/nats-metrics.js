@@ -1,20 +1,32 @@
 "use strict";
 
-var fs = require('fs');
-var path = require('path');
+let fs = require('fs');
+let path = require('path');
 require('console.table');
 
-var summaries = {};
-var tables = {};
-var processed = 0;
+let summaries = {};
+let tables = {};
+let processed = 0;
 
-var dataDir = ".";
+let dataDir = ".";
 if(process.argv.length === 3) {
     dataDir = process.argv[2];
 }
-var notFound = 0;
+let notFound = 0;
 
-var dataFiles = ["pub.csv", "pubsub.csv", "reconnect.csv", "rr.csv", "sub.csv"];
+let metricTitles = {
+    pub: "Publisher Metrics",
+    sub: "Subscriber Metrics",
+    pubsub: "Publish+Subscriber Metrics",
+    reqrep: "Request Reply Metrics",
+};
+
+let files = fs.readdirSync(dataDir);
+let dataFiles = files.filter(function(v) {
+    return v.endsWith(".csv");
+});
+
+
 dataFiles.forEach(function(v) {
     parse(path.resolve(path.join(dataDir, v)));
 });
@@ -26,27 +38,28 @@ function parse(file) {
         return;
     }
     console.log(file);
-    fs.readFile(file, function(err, data) {
+    fs.readFile(file, (err, data) => {
         if(err) {
             throw err;
         }
-        var lines = data.toString().split('\n');
+        let lines = data.toString().split('\n');
 
         // csv data is: metric, count, millis, date, version
-        lines.forEach(function(line, index){
+        lines.forEach((line, index) => {
             if(index === 0 || line === "") {
                 // csv header
                 return;
             }
             // split the fields
-            var f = line.split(',');
-            var e = {
+            let f = line.split(',');
+            let e = {
                 metric: f[0],
                 count: parseInt(f[1], 10),
                 millis: parseInt(f[2], 10),
                 date: Date.parse(f[3]),
                 version: f[4]
             };
+            e.rate = (e.count * 1000) / e.millis;
 
             if(e.metric === 'rr' && f.length === 6) {
                 e.lat = parseFloat(f[5])
@@ -74,12 +87,12 @@ function loaded() {
     if(processed + notFound === dataFiles.length) {
         // we parsed all the sample, generate a summary
         Object.keys(tables).forEach(function(metric) {
-            var versions = Object.keys(tables[metric].versions);
+            let versions = Object.keys(tables[metric].versions);
             versions.forEach(function(version) {
                 // reduce the samples for a version
-                var samples = tables[metric].versions[version];
-                var summary = {count: 0, millis: 0, version: version, metric: metric, average: 0, max: 0, min: 0, samples: 0, lat: 0};
-                summary = samples.reduce(function(accumulator, sample, index) {
+                let samples = tables[metric].versions[version];
+                let summary = {count: 0, millis: 0, version: version, metric: metric, max: 0, min: 0, samples: 0, lat: 0, rate: 0};
+                summary = samples.reduce((accumulator, sample, index) => {
                     if(index === 0) {
                         accumulator.min = sample.millis;
                     }
@@ -97,7 +110,7 @@ function loaded() {
                     return accumulator;
                 }, summary);
                 // calculate an average
-                summary.average = summary.millis / samples.length;
+                summary.rate = summary.count * 1000 / summary.millis;
                 if(summary.lat) {
                     summary.lat = summary.lat / samples.length;
                 } else {
@@ -116,22 +129,16 @@ function loaded() {
 }
 
 function rate(s) {
-    if(s.metric !== 'reconnect') {
-        return Math.floor(s.samples / (s.average / 1000)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " msgs/sec";
-    } else {
-        return Math.floor(s.average) + "ms";
-    }
-
-
+    return Math.floor(s.count*1000 / s.millis).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " msgs/sec";
 }
 
 
 function print() {
     Object.keys(summaries).forEach(function(metric) {
-        console.log(metric.toUpperCase());
-        // sort by peformance
+        console.log(metricTitles[metric].toUpperCase(),"\n");
+        // sort by performance
         summaries[metric].sort(function(a, b){
-            return a.average - b.average;
+            return (b.count*1000 / b.millis) - (a.count*1000 / a.millis);
         });
         summaries[metric].forEach(function(s){
             s.rate = rate(s);
@@ -140,10 +147,5 @@ function print() {
             delete s.metric;
         });
         console.table(summaries[metric]);
-
     });
-}
-
-function units(metric) {
-    return " msgs/sec";
 }
