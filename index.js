@@ -110,7 +110,7 @@ function loaded() {
                     return accumulator;
                 }, summary);
                 // calculate an average
-                summary.rate = summary.count * 1000 / summary.millis;
+                summary.rate = Math.floor(summary.count * 1000 / summary.millis);
                 if(summary.lat) {
                     summary.lat = summary.lat / samples.length;
                 } else {
@@ -134,6 +134,7 @@ function rate(s) {
 
 
 function print() {
+    console.log(summaries);
     Object.keys(summaries).forEach(function(metric) {
         console.log(metricTitles[metric].toUpperCase(),"\n");
         // sort by performance
