@@ -1,4 +1,4 @@
-# node-nats-metrics
+# nats-metrics.js
 Metrics tooling  for node-nats and derivatives
 
 ```bash
