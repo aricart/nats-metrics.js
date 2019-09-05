@@ -1,6 +1,6 @@
 {
   "name": "nats-metrics",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Metrics tooling  for node-nats and derivatives",
   "main": "index.js",
   "scripts": {

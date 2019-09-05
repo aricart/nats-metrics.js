@@ -18,7 +18,8 @@ let metricTitles = {
     pub: "Publisher Metrics",
     sub: "Subscriber Metrics",
     pubsub: "Publish+Subscriber Metrics",
-    reqrep: "Request Reply Metrics",
+    rr: "Request Reply Metrics",
+    reconnect: "Reconnect"
 };
 
 let files = fs.readdirSync(dataDir);
@@ -37,7 +38,6 @@ function parse(file) {
         notFound++;
         return;
     }
-    console.log(file);
     fs.readFile(file, (err, data) => {
         if(err) {
             throw err;
@@ -134,7 +134,6 @@ function rate(s) {
 
 
 function print() {
-    console.log(summaries);
     Object.keys(summaries).forEach(function(metric) {
         console.log(metricTitles[metric].toUpperCase(),"\n");
         // sort by performance
